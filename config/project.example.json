@@ -1,0 +1,86 @@
+{
+  "$comment": "プロジェクト固有のデフォルト設定。/setup が project.local.json にコピーします（local はgitignore対象）。",
+
+  "platform": {
+    "default": "auto",
+    "webTarget": "auto",
+    "$comment": "default: auto = Figma から自動検知（不明ならユーザーに確認）。web / native で固定可。webTarget: auto = 要件ヒアリングで判定（app = SPA / lp = Astro / content-site = Next.js。CLAUDE.md ステップ 3）。固定も可。"
+  },
+
+  "tokens": {
+    "pipeline": "style-dictionary",
+    "figmaExport": "ask",
+    "customPluginSpec": "config/custom-plugin-spec.md",
+    "product": "",
+    "$comment": "正本は DTCG 形式。構造 = tokens/core/（ブランドの根源・最小限）+ tokens/product/<product>/mode/（default 必須・作り込みの主戦場。モードは必要時に差分追加。rules/common.md §2）。product はプロダクト名（未設定なら生成時に確認）。変換は Style Dictionary。トークンは生成コードと同じブランチ・同じ PR に入れ、コミット・Push・PR 作成は Claude が git/gh で行う（デザイナーに GitHub のブラウザ画面を触らせない。CLAUDE.md ステップ 6・11）。figmaExport（4つから選択。推奨は置かない）: tokens-studio = Tokens Studio + GitHub Sync（この方式のみプラグインの Push ボタンが別 PR を起票する）/ custom-plugin = 自作 Figma プラグインの書き出し JSON を受け取る / plugin = 既製プラグイン（TokensBrücke 等）の書き出し JSON を受け取る / claude = プラグインを使わず Claude Code が MCP から変換 / ask = 実行時または /setup で確認して保存。プラグイン方式で受け取った JSON は「正本 tokens/ への取り込み」と「値→トークン名の逆引き表の作成」の両方に使い切る（common.md §2）。customPluginSpec: custom-plugin のとき、その出力仕様と DTCG への正規化ルールを書いたメモのパス（初回に確認して記録し、以降同じ変換を再現する）。Airis 同梱のプラグイン「Airis Design Tokens Export」（figma-plugin/）を使う場合は rules/figma-plugin-airis.md を指定すれば済む（提案は一度だけ・押しつけない。CLAUDE.md ステップ6-1）。"
+  },
+
+  "web": {
+    "framework": "react",
+    "buildTool": "vite",
+    "language": "typescript",
+    "styling": "tailwind",
+    "variants": "cva",
+    "router": "react-router",
+    "componentStrategy": "radix-shadcn",
+    "componentPrefix": "",
+    "directoryLayout": "feature-based",
+    "form": "react-hook-form",
+    "stateManagement": { "client": "useState/useContext/zustand", "server": "tanstack-query" },
+    "schema": "zod",
+    "$comment": "Web のデフォルトターゲット。rules/web-app.md と対応。葉は shadcn/ui 派生（components/ui）、自作は接頭辞 + PascalCase（componentPrefix。空 = 接頭辞なし。例: \"App\" → AppSearchField.tsx）。クライアント状態は範囲で使い分け（web-app.md §4 のフローチャート）。"
+  },
+
+  "testing": {
+    "unit": false,
+    "componentTests": "storybook-play",
+    "storybookAddons": ["autodocs", "a11y"],
+    "storybookRunner": "test-runner",
+    "a11yTest": "error",
+    "a11yReviewOnly": [],
+    "e2e": "playwright",
+    "e2eGenerate": "pages-only",
+    "visualRegression": "playwright-screenshot",
+    "ci": "github-actions",
+    "componentTestBranches": ["develop", "main"],
+    "storyTestBranches": ["develop", "main"],
+    "vrtBranches": ["develop", "main"],
+    "playwrightImage": "mcr.microsoft.com/playwright:v1.62.0-noble",
+    "$comment": "Vitest は使わない。テストは3層（rules/web-app-testing.md）: ①コンポーネント=@storybook/test-runner(play/a11y) ②ストーリー=@playwright/test(画面のできること) ③VRT=@playwright/test(Storybook のストーリーを撮影して比較)。③は test-runner では実行しない（toHaveScreenshot は @playwright/test のマッチャーのため）。すべて GitHub Actions で実行する。a11yTest: .storybook/preview.ts の parameters.a11y.test（error = 違反で CI 失敗 / todo = 報告のみ / off = 無効。既定は error）。a11yReviewOnly: CI では落とさず「要確認（axe の reviewOnRun）」に格下げする規則 ID の一覧。既定は空 = コントラストも含めて CI で落とす。赤くなったら Claude が Actions のログを読み、実装起因（Claude が直す）とデザイン起因（Figma の Variable を直す）に切り分けてデザイナーへ返す（rules/web-app-testing.md・CLAUDE.md ステップ 11）。コントラストは生成前診断で機械計算できるので（scripts/contrast.mjs・rules/common.md §9.2）、CI は最後の砦。一時的に外す場合は PR 本文に理由と件数を書く。*Branches: そのブランチへの push / PR で実行する（git.developBranch / mainBranch と揃える）。VRT のコスト・差分ノイズが問題なら vrtBranches を [\"main\"] に絞る。playwrightImage: VRT の描画環境を固定するコンテナ。**package.json の @playwright/test と必ず同じ版**にし、baseline を撮った版から勝手に上げない（上げるときは baseline 撮り直しとセット）。"
+  },
+
+  "lint": {
+    "tool": "eslint",
+    "formatter": "prettier",
+    "prettier": true,
+    "$comment": "検査 = ESLint（typescript-eslint + react-hooks + jsx-a11y、最後に eslint-config-prettier）/ 整形 = Prettier の責務分割（web-app.md §6）。TS は strict 必須、no-explicit-any は warn → 3ヶ月後 error。移植先が別設定ならそちらに合わせる。"
+  },
+
+  "native": {
+    "framework": "ask",
+    "$comment": "ask = 生成時に必ずユーザーへ確認（react-native / flutter / swiftui / kotlin など）。"
+  },
+
+  "storybook": {
+    "enabled": true,
+    "publish": "github-pages",
+    "deployBranch": "develop",
+    "pagesEnabled": false,
+    "visibilityAcknowledged": false,
+    "$comment": "enabled: true でコンポーネントごとに Storybook ストーリーも生成（形式は各 rules/*.md）。publish: 共有方法。github-pages = GitHub Actions でビルド・テストして GitHub Pages に公開（既定。ローカル起動は前提にしない。rules/web-app-storybook.md §2）/ artifact = Actions の成果物としてダウンロード（Pages を公開できない場合）/ none = 公開しない。deployBranch: **Pages へ公開するブランチはこのキーが正**（既定 = git.developBranch と同じ develop。作業中のものを常に見える状態にするため）。develop を使わない運用では main にする。pagesEnabled: 移植先で「Settings → Pages → Source: GitHub Actions」を設定済みか（false の間は Claude が PR 本文とチャットで手順を案内する。手順書ファイルは作らない。rules/web-app-storybook.md §3）。visibilityAcknowledged: 公開範囲（Public リポジトリの Pages は誰でも閲覧可）を説明して合意済みか。"
+  },
+
+  "git": {
+    "developBranch": "develop",
+    "mainBranch": "main",
+    "$comment": "移植先のブランチ運用。開発ブランチ = 日々の統合先 / 本番ブランチ = リリース。CI のトリガー（testing.*Branches）と PR のマージ先に使う。develop を使わない運用なら developBranch を \"\" にする（その場合は main のみで CI と公開を行う）。生成物の PR は既定で developBranch 宛に出す。Storybook をどのブランチで公開するかは storybook.deployBranch が正（既定で developBranch と同じ）。"
+  },
+
+  "pushTarget": {
+    "askEveryTime": true,
+    "$comment": "要件により毎回プロンプトで確認します。ここに url/branch を入れても既定では使いません。確認はコード生成の「前」に行い、クローンした作業ツリーへ直接生成します（output/ 経由の配置し直しはしない。CLAUDE.md ステップ 5）。",
+    "url": "",
+    "branch": "",
+    "subdir": ""
+  }
+}

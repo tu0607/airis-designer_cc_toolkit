@@ -1,0 +1,16 @@
+{
+  "name": "Airis Design Tokens Export",
+  "id": "airis-design-tokens-export",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "src/ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  }
+}

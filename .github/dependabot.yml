@@ -1,0 +1,36 @@
+# Airis 自身の依存の鮮度を保つ。
+# **package-lock.json を配布物に含めている**ので、ここが古いと
+# 同期した利用側リポジトリ全員のアラートが再発する（利用側で上げても同期で巻き戻る）。
+#
+# ★ このファイルが設定するのは **version updates（定期的な更新 PR）だけ**。
+#   **Dependabot alerts / security updates はリポジトリの設定側のトグル**で、
+#   ここでは有効にできない（Settings → Code security → Dependabot）。
+#   **人手が必要な設定なので、管理者に依頼する**（GitHub Pages の有効化と同じ扱い）。
+version: 2
+updates:
+  # 本体（style-dictionary。トークン変換に使う）
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    groups:
+      # セキュリティ以外はまとめて 1 本の PR にする（レビューの回数を増やさない）
+      all-non-security:
+        applies-to: version-updates
+        patterns: ["*"]
+
+  # 同梱の Figma プラグイン（typescript / @figma/plugin-typings）
+  - package-ecosystem: npm
+    directory: /figma-plugin
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(figma-plugin)"
+    groups:
+      all-non-security:
+        applies-to: version-updates
+        patterns: ["*"]

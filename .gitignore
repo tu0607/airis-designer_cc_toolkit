@@ -1,0 +1,23 @@
+# 環境変数・シークレット
+.env
+.env.local
+
+# Claude Code のローカル設定（Figma APIトークンを含むため共有しない）
+.claude/settings.local.json
+
+# 作業用（HTML モック・診断の控え・Push 先リポジトリのクローン）
+/output/
+
+# プロジェクト固有のローカル設定
+/config/project.local.json
+
+# 依存関係
+node_modules/
+
+# install.sh が展開先に書く台帳（取得元と各ファイルのハッシュ。リポジトリには含めない）
+.airis-manifest
+.airis-version
+
+# OS
+.DS_Store
+Thumbs.db

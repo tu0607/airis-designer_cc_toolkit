@@ -1,0 +1,8 @@
+{
+  "name": "airis",
+  "private": true,
+  "description": "デザイン→コード変換のオーケストレーション（Claude Code + 変換ルール）。style-dictionary はデザイントークンの変換に使用。",
+  "devDependencies": {
+    "style-dictionary": "^5.5.0"
+  }
+}
