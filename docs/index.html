@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Airis — デザイナースターターキット w/ Claude Code</title>
+<meta name="description" content="Airis は、デザイナーが Claude Code と対話しながらデザインをコードにする Claude Code プラグイン。Figma・ラフ画・言葉のどれからでも、ルールに沿ったコード（Storybook・テスト込み）を開発リポジトリまで届けます。">
+<meta property="og:title" content="Airis — デザイナースターターキット w/ Claude Code">
+<meta property="og:description" content="デザイナーの閃きを、そのままエンジニアの世界へ。Figma・ラフ画・言葉からコードへ。">
+<style>
+:root {
+  --ink: #201d1a;
+  --ink-soft: #6b645a;
+  --bg: #faf7f2;
+  --card: #fffefb;
+  --line: #e7e1d5;
+  --alt: #f3efe6;
+  --link: #2563eb;
+  --grad: linear-gradient(90deg, #f43f5e, #f97316, #facc15, #22c55e, #0ea5e9, #6366f1, #a855f7);
+  --code-bg: #201d1a;
+  --code-ink: #f5f2ec;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; display: block; height: 4px; background: var(--grad); }
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+a { color: var(--link); }
+
+/* hero */
+.hero { padding: 88px 0 64px; text-align: center; position: relative; overflow: hidden; }
+.hero .wrap { position: relative; }
+.badge {
+  display: inline-block; font-size: .8rem; font-weight: 600;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 14px; color: var(--ink-soft); background: var(--card);
+  margin-bottom: 24px;
+}
+h1 { font-size: clamp(2.1rem, 6vw, 3.2rem); line-height: 1.3; letter-spacing: .01em; }
+h1 .kw { border-bottom: 6px solid; border-image: var(--grad) 1; padding-bottom: 2px; }
+.lede { margin: 20px auto 0; max-width: 40em; color: var(--ink-soft); font-size: 1.05rem; }
+.cta { margin-top: 36px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 10px;
+  font-weight: 700; text-decoration: none; font-size: .95rem;
+}
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-ghost { border: 1.5px solid var(--line); color: var(--ink); background: var(--card); }
+
+/* install */
+.install { margin: 48px auto 0; max-width: 640px; text-align: left; }
+.install p { font-size: .85rem; color: var(--ink-soft); margin-bottom: 8px; }
+pre {
+  background: var(--code-bg); color: var(--code-ink);
+  border-radius: 12px; padding: 18px 22px; overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .88rem; line-height: 1.9;
+}
+pre .c { color: #8f8aa8; }
+
+/* sections */
+section { padding: 64px 0; }
+section.alt { background: var(--alt); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+h2 { font-size: 1.6rem; text-align: center; margin-bottom: 8px; }
+.sub { text-align: center; color: var(--ink-soft); margin-bottom: 40px; }
+
+/* cards */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.card-wide { grid-column: 1 / -1; }
+@media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 24px 22px;
+}
+.card .icon { font-size: 1.4rem; }
+.card h3 { font-size: 1.02rem; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+.card p { font-size: .88rem; color: var(--ink-soft); }
+.card .tag {
+  display: inline-block; font-size: .72rem; font-weight: 700; color: #fff;
+  background: var(--grad); border-radius: 999px; padding: 2px 10px; margin-left: 6px;
+  vertical-align: 2px;
+}
+
+/* flow */
+.flow { display: flex; align-items: stretch; gap: 8px; }
+.flow .step {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 10px; text-align: center; flex: 1 0 auto;
+}
+.flow .step b { display: block; font-size: .92rem; white-space: nowrap; }
+.flow .step span { font-size: .75rem; color: var(--ink-soft); white-space: nowrap; }
+.flow .arrow { align-self: center; color: var(--ink-soft); font-weight: 700; }
+@media (max-width: 899px) {
+  .flow { flex-direction: column; align-items: center; }
+  .flow .step { width: 100%; max-width: 320px; }
+  .flow .arrow { transform: rotate(90deg); }
+}
+
+/* steps */
+ol.steps { list-style: none; counter-reset: n; max-width: 640px; margin: 0 auto; }
+ol.steps li {
+  counter-increment: n; position: relative; padding: 0 0 28px 56px;
+}
+ol.steps li::before {
+  content: counter(n);
+  position: absolute; left: 0; top: 2px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ink); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+ol.steps h3 { font-size: 1.05rem; margin-bottom: 4px; }
+ol.steps p { font-size: .9rem; color: var(--ink-soft); }
+ol.steps pre { margin-top: 10px; }
+
+/* trust */
+.trust { max-width: 640px; margin: 0 auto; }
+.trust ul { list-style: none; }
+.trust li { padding: 10px 0 10px 34px; position: relative; border-bottom: 1px dashed var(--line); font-size: .95rem; }
+.trust li::before { content: "🛡️"; position: absolute; left: 0; }
+
+/* docs table */
+table { width: 100%; border-collapse: collapse; font-size: .9rem; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+th { background: var(--alt); font-size: .82rem; color: var(--ink-soft); }
+tr:last-child td { border-bottom: none; }
+.tablewrap { overflow-x: auto; }
+
+footer { padding: 56px 0 64px; text-align: center; color: var(--ink-soft); font-size: .88rem; border-top: 1px solid var(--line); }
+footer .name { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="badge">Claude Code プラグイン</span>
+    <h1>デザイナーの閃きを、<br>そのまま<span class="kw">コード</span>に。</h1>
+    <p class="lede">
+      Airis（アイリス）は、デザイナーが Claude Code と対話しながらデザインをコードにするプラグイン。
+      Figma・手描きのラフ画・会話での要望のどれからでも、プロジェクトのルールに沿ったコード
+      （Storybook・テスト込み）を生成し、開発リポジトリまで届けます。
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#quickstart">はじめる</a>
+      <a class="btn btn-ghost" href="https://github.com/tu0607/airis-designer_cc_toolkit">GitHub で見る</a>
+    </div>
+    <div class="install">
+      <p>インストールは Claude Code で 2 コマンドだけ。ターミナルでのダウンロード作業はありません。</p>
+      <pre>/plugin marketplace add tu0607/airis-designer_cc_toolkit
+/plugin install airis@airis</pre>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>どのようなものからでもコード化可能</h2>
+    <p class="sub">必要なのはこのプラグインと Claude Code だけ。Figma 無しでも全フローが完結します。</p>
+    <div class="grid">
+      <div class="card card-wide">
+        <h3><span class="icon">🎨</span>Figma を使う<span class="tag">メイン</span></h3>
+        <p>既存の Figma デザインをそのままコード化。Variables/Styles はデザイントークンとして正しく引き継ぎます。</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">🖌️</span>Claude Design を使う</h3>
+        <p>claude.ai/design で作り込んだデザイン一式を受け取ってコード化。途中から確認・作り込みに使うのも OK。</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">✏️</span>ラフ画を渡す</h3>
+        <p>手描きスケッチの写真やスクリーンショットから「こんなのを作って」。</p>
+      </div>
+      <div class="card">
+        <h3><span class="icon">💬</span>言葉で伝える</h3>
+        <p>「こういう画面が欲しい」→ Claude がデザインを提案 → 合意してからコード化。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>仕組み</h2>
+    <p class="sub">デザインを受け取り、ルールに従って変換し、テストと公開まで自動でつなぎます。</p>
+    <div class="flow">
+      <div class="step"><b>🎨 デザイン</b><span>Figma / ラフ画 / 言葉</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>🤖 Claude</b><span>ルールに従い変換</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>📦 生成コード</b><span>Storybook・テスト込み</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>🚀 Push / PR</b><span>確認後にリポジトリへ</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>📖 公開</b><span>CI が Storybook を公開</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <h2>クイックスタート</h2>
+    <p class="sub">前提は Git・Node.js v22+・Claude Code・GitHub CLI。Figma 接続は任意です。</p>
+    <ol class="steps">
+      <li>
+        <h3>インストール</h3>
+        <p>Claude Code を起動して 2 コマンド。更新は <code>/plugin marketplace update</code>。</p>
+        <pre>/plugin marketplace add tu0607/airis-designer_cc_toolkit
+/plugin install airis@airis</pre>
+      </li>
+      <li>
+        <h3>セットアップ</h3>
+        <p>作業したいプロジェクトで実行。何度実行しても安全（冪等）、Figma はスキップ可。</p>
+        <pre>/airis:setup</pre>
+      </li>
+      <li>
+        <h3>デザインをコード化</h3>
+        <p>あとは Claude が対話で進めます。要望や Figma URL も直接渡せます。</p>
+        <pre>/airis:build-code
+<span class="c"># 例:</span>
+/airis:build-code ログイン画面を作りたい。メールとパスワードでログイン
+/airis:build-code https://www.figma.com/...</pre>
+      </li>
+      <li>
+        <h3>トークンだけ直した回は</h3>
+        <p>Figma で色・余白などを直しただけの回は、コードを作り直さず反映。</p>
+        <pre>/airis:build-token</pre>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>勝手にやらない、が設計方針</h2>
+    <p class="sub">Airis は候補を報告するだけ。判断はいつもあなたがします。</p>
+    <div class="trust">
+      <ul>
+        <li>Push など外部に影響する操作は、必ず事前に確認します。</li>
+        <li>トークンの値を勝手に増やしたり、共通層に置いたりしません。</li>
+        <li>VRT 対象を勝手に増やしません。</li>
+        <li>Figma 側の設定不足を勝手に補完せず、不備として報告します。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>もっと詳しく</h2>
+    <p class="sub">迷ったら「使い方の詳細」から。</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>ドキュメント</th><th>何が書いてあるか</th></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/usage.md">使い方の詳細</a></td><td><code>/airis:build-code</code> の進み方・Claude のコマンド</td></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/design-tokens.md">トークンの取り出し方</a></td><td>Figma から DTCG JSON にする 4 つの方法</td></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/design-system.md">デザインシステムの考え方</a></td><td>Core / product / mode の層構造</td></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/testing-and-publishing.md">テストと公開</a></td><td>テスト 3 層・Storybook の公開範囲</td></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/tech-stack.md">生成コードの技術スタック</a></td><td>3 ターゲットの振り分けと採用技術</td></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/repo-structure.md">リポジトリ構成とカスタマイズ</a></td><td>プラグインの中身・自社向けカスタマイズ</td></tr>
+        <tr><td><a href="https://github.com/tu0607/airis-designer_cc_toolkit/blob/main/docs/troubleshooting.md">困ったときの対処</a></td><td>よくある症状と対処</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><span class="name">Airis</span> = AI + Iris。</p>
+    <p>虹の女神 Iris が神々の言葉を届けたように、デザイナーの閃きを素早くエンジニアの世界へ届けます🌈</p>
+  </div>
+</footer>
+
+</body>
+</html>
