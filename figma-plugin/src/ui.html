@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 12px;
+        color: #333;
+        margin: 0;
+        padding: 16px;
+      }
+      h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+      }
+      p {
+        margin: 0 0 12px;
+        line-height: 1.5;
+      }
+      button {
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 12px;
+        border: 0;
+        border-radius: 6px;
+        background: #18a0fb;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #cbd5e0;
+        cursor: default;
+      }
+      .hint {
+        margin-top: 12px;
+        color: #718096;
+        font-size: 11px;
+      }
+      /* 検証結果（無言で壊れないための表示）。0 件なら出さない */
+      .warn {
+        margin-top: 12px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        background: #fffaf0;
+        border: 1px solid #f6ad55;
+        color: #7b341e;
+        font-size: 11px;
+        line-height: 1.6;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .warn b {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .warn ul {
+        margin: 0;
+        padding-left: 16px;
+      }
+      code {
+        background: #edf2f7;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Airis Design Tokens Export</h3>
+    <p id="status">Variables を読み込み中…</p>
+    <button id="dl" disabled>tokens.bundle.json をダウンロード</button>
+    <div id="warn" class="warn" hidden></div>
+    <!-- ここに書くのは「物理的に何が起きたか」だけ。
+         手順・コマンド名・ドキュメント名を書かない:
+           - 運用が変わるたびに再ビルドが必要になり、古い案内が残る（実際に起きた）
+           - 読んでいるのはデザイナーなので、Claude 向けの CLAUDE.md へ誘導しても相手が違う
+             （取り込み手順自体も CLAUDE.md ではなく .claude/commands/ 側にある）
+         この先の案内は Claude が行う（bundle のパスを受け取る = figma-plugin-airis.md §5） -->
+    <p class="hint">
+      ダウンロードした <code>tokens.bundle.json</code>（既定 <code>~/Downloads</code>）の
+      パスを Claude Code に伝えてください。この先は Claude が案内します。
+    </p>
+
+    <script>
+      let bundle = null;
+
+      // 検証項目の表示名（$meta.json.validation と対応）
+      const LABELS = {
+        danglingRefs: '定義が見つからない参照',
+        unresolvedAliases: '解決できなかった変数',
+        pathConflicts: 'トークン名の衝突',
+        crossFileDuplicates: 'ファイルをまたいだ二重定義',
+        fileConflicts: 'ファイル名の衝突',
+        exportFailures: 'SVG 書き出しの失敗',
+        libraryBoundToLocalNames: '参考: 購読ライブラリ版の変数に束縛されている',
+        droppedRemoteModes: '取り込めなかったリモートのモード',
+        missingValues: '値が取れなかったトークン',
+      };
+
+      function renderWarnings(v) {
+        const el = document.getElementById('warn');
+        if (!v) return;
+        const items = [];
+        for (const key of Object.keys(LABELS)) {
+          const list = v[key] || [];
+          if (list.length === 0) continue;
+          const head = LABELS[key] + '（' + list.length + '件）';
+          const sample = list.slice(0, 3).map((s) => '<li>' + escapeHtml(s) + '</li>').join('');
+          const more = list.length > 3 ? '<li>…他 ' + (list.length - 3) + ' 件</li>' : '';
+          items.push('<b>' + head + '</b><ul>' + sample + more + '</ul>');
+        }
+        if (items.length === 0) return;
+        el.innerHTML =
+          items.join('') +
+          '<div style="margin-top:6px">詳細は <code>$meta.json</code> の <code>validation</code> に入っています。</div>';
+        el.hidden = false;
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"]/g, (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+        );
+      }
+
+      onmessage = (e) => {
+        const msg = e.data.pluginMessage;
+        if (!msg) return;
+        if (msg.type === 'tokens') {
+          bundle = msg.bundle;
+          const files = Object.keys(bundle);
+          document.getElementById('status').textContent =
+            files.length +
+            ' ファイル分を抽出しました' +
+            (msg.hasIssues ? '（要確認あり）' : '') +
+            ': ' +
+            files.join(', ');
+          document.getElementById('dl').disabled = false;
+          renderWarnings(msg.validation);
+        }
+        if (msg.type === 'error') {
+          document.getElementById('status').textContent = 'エラー: ' + msg.message;
+        }
+      };
+
+      document.getElementById('dl').onclick = () => {
+        if (!bundle) return;
+        const blob = new Blob([JSON.stringify(bundle, null, 2)], {
+          type: 'application/json',
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tokens.bundle.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+    </script>
+  </body>
+</html>
