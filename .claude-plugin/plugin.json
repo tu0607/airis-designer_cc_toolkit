@@ -1,0 +1,8 @@
+{
+  "name": "airis",
+  "version": "1.0.0",
+  "description": "デザイナー向け design-to-code ツールキット。Figma・ラフ画・言葉・Claude Design のどれからでも、ルールに従ったコード（Storybook・テスト込み）を生成して開発リポジトリへ Push する",
+  "author": {
+    "name": "tu0607"
+  }
+}

@@ -1,0 +1,9 @@
+# Claude Code のローカル設定（ローカル固有の設定を含むため共有しない）
+.claude/settings.local.json
+
+# 依存関係（figma-plugin/ のビルド用）
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

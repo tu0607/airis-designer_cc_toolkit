@@ -1,0 +1,14 @@
+{
+  "name": "airis",
+  "description": "Airis — デザイナー向け design-to-code ツールキットの配布 marketplace",
+  "owner": {
+    "name": "tu0607"
+  },
+  "plugins": [
+    {
+      "name": "airis",
+      "source": "./",
+      "description": "デザイナー向け design-to-code ツールキット。Figma・ラフ画・言葉・Claude Design のどれからでも、ルールに従ったコード（Storybook・テスト込み）を生成して開発リポジトリへ Push する"
+    }
+  ]
+}

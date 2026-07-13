@@ -1,0 +1,20 @@
+# 同梱の Figma プラグインの依存の鮮度を保つ。
+#
+# ★ このファイルが設定するのは **version updates（定期的な更新 PR）だけ**。
+#   **Dependabot alerts / security updates はリポジトリの設定側のトグル**で、
+#   ここでは有効にできない（Settings → Code security → Dependabot）。
+#   **人手が必要な設定なので、管理者に依頼する**（GitHub Pages の有効化と同じ扱い）。
+version: 2
+updates:
+  # 同梱の Figma プラグイン（typescript / @figma/plugin-typings）
+  - package-ecosystem: npm
+    directory: /figma-plugin
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(figma-plugin)"
+    groups:
+      all-non-security:
+        applies-to: version-updates
+        patterns: ["*"]

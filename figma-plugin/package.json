@@ -1,0 +1,15 @@
+{
+  "name": "airis-design-tokens-plugin",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Figma Variables を DTCG トークンとして書き出す社内プラグイン（フェーズ1: ダウンロード版）",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "test": "npm run build && node test/export.test.mjs && node test/validation.test.mjs"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.2",
+    "typescript": "^5.6.3"
+  }
+}

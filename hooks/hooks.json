@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[Airis] plugin root: ${CLAUDE_PLUGIN_ROOT}\"; if [ -d .airis ]; then cat \"${CLAUDE_PLUGIN_ROOT}/rules/principles.md\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

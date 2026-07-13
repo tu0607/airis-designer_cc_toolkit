@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "figma-dev-mode": {
+      "type": "http",
+      "url": "http://127.0.0.1:3845/mcp"
+    },
+    "figma-framelink": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "figma-developer-mcp",
+        "--figma-api-key=${FIGMA_API_KEY}",
+        "--stdio"
+      ]
+    }
+  }
+}
