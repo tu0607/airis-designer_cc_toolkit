@@ -9,7 +9,7 @@
     "test": "npm run build && node test/export.test.mjs && node test/validation.test.mjs"
   },
   "devDependencies": {
-    "@figma/plugin-typings": "^1.100.2",
-    "typescript": "^5.6.3"
+    "@figma/plugin-typings": "^1.131.0",
+    "typescript": "^7.0.2"
   }
 }
