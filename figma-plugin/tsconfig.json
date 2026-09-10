@@ -2,11 +2,12 @@
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["ES2017"],
+    "rootDir": "src",
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "typeRoots": ["./node_modules/@types", "./node_modules/@figma"]
+    "types": ["@figma/plugin-typings"]
   },
   "include": ["src/code.ts"]
 }
