@@ -46,3 +46,4 @@
 | `/airis:setup` | 初回セットアップ（前提確認・`.airis/` の用意・任意の Figma 接続。冪等） |
 | `/airis:build-code` | デザイン確定 → コード化（Storybook 込み）→ Push |
 | `/airis:build-token` | トークン（色・余白など）だけを取り込み・更新して PR にする（コードは作り直さない） |
+| `/airis:build-plugin` | 同梱の Figma プラグイン「Airis Design Tokens Export」をビルドしてプロジェクト直下の `figma-plugin/` に置く（使う場合のみ。初回と Airis 更新後。ビルド済みをクローンした人は不要） |

@@ -2,7 +2,7 @@
 
 このプロジェクトには `.airis/` があり、**Airis プラグインの design-to-code フロー**で運用されています。
 フロー全体の「正」は `<Airis>/rules/flow.md`（`<Airis>` = セッション開始時に表示されたプラグインの場所）。
-入口コマンドは `/airis:setup`（セットアップ）/ `/airis:build-code`（コード化）/ `/airis:build-token`（トークンのみ更新）。
+入口コマンドは `/airis:setup`（セットアップ）/ `/airis:build-code`（コード化）/ `/airis:build-token`（トークンのみ更新）/ `/airis:build-plugin`（同梱 Figma プラグインのビルド。使う場合のみ）。
 
 - デザイナーは非エンジニアの可能性があります。**専門用語を避け、日本語で、1 ステップずつ**案内してください。
 - プロジェクト固有の設定は `.airis/config.json`、ルールの自社向け差分は `.airis/rules/`（同名ファイルがあれば `<Airis>/rules/` より**優先**して読む）。

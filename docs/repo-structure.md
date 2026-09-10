@@ -13,7 +13,8 @@ airis-designer_cc_toolkit/
 ├── commands/                     # 利用者に配布されるスラッシュコマンド
 │   ├── setup.md                  # /airis:setup（前提確認・.airis/ の用意・Figma 接続）
 │   ├── build-code.md             # /airis:build-code（デザイン確定 → コード化 → Push）
-│   └── build-token.md            # /airis:build-token（トークンのみ取り込み・更新 → PR）
+│   ├── build-token.md            # /airis:build-token（トークンのみ取り込み・更新 → PR）
+│   └── build-plugin.md           # /airis:build-plugin（同梱 Figma プラグインをビルド → プロジェクト直下の figma-plugin/）
 ├── hooks/
 │   └── hooks.json                # SessionStart: .airis/ のあるプロジェクトで 4 原則を自動注入
 ├── docs/                         # README から切り出した説明（読むのは必要になったときで良い）
@@ -43,7 +44,7 @@ airis-designer_cc_toolkit/
 ├── figma-plugin/                 # 同梱の Figma プラグイン「Airis Design Tokens Export」
 │   │                             #   Variables を DTCG で書き出す（Enterprise プラン不要）
 │   │                             #   使うかは任意。取り込み仕様は rules/figma-plugin-airis.md
-│   ├── setup.sh                  # ▶ これ 1 つで導入・ビルド・テスト（Claude が実行できる）
+│   ├── build.sh                  # ▶ /airis:build-plugin の実体（依存導入・ビルド・テスト → 成果物をプロジェクト直下の figma-plugin/ へ）
 │   ├── README.md                 #   Figma への読み込み・出力契約
 │   ├── src/{code.ts, ui.html}    #   プラグイン本体（npm run build で dist/ を生成）
 │   └── test/                     #   Figma API をスタブした書き出しテスト（npm test）
@@ -64,15 +65,17 @@ airis-designer_cc_toolkit/
     └── commands/doc-audit.md     #   /doc-audit（メンテナ専用。プラグインには含めない）
 ```
 
-**利用者のプロジェクト側**に置かれるのは `.airis/` だけです（`/airis:setup` が作る）:
+**利用者のプロジェクト側**に置かれるのは `.airis/` です（`/airis:setup` が作る）:
 
 ```
 <あなたのプロジェクト>/.airis/
 ├── config.json      # プロジェクト固有の設定（コミットして共有）
 ├── rules/           # 自社向けのルール差分（同名ファイルが本体より優先される。コミットして共有）
-├── work/            # 使い捨て（HTML モック・診断の控え・Push 先のクローン。gitignore 済み）
+├── work/            # 使い捨て（HTML モック・診断の控え・Push 先のクローン・プラグインのビルド作業場。gitignore 済み）
 └── .gitignore       # 「work/」の 1 行
 ```
+
+同梱の Figma プラグインを使う場合だけ、ビルド済みのプラグイン（`manifest.json` / `code.js` / `ui.html`）が**プロジェクト直下の `figma-plugin/`** にも置かれます（`/airis:build-plugin` が置く。隠しフォルダだと Figma のファイル選択画面で見つけにくいため `.airis/` の外。小さいのでコミットして共有）。
 
 ## 更新のしかた
 

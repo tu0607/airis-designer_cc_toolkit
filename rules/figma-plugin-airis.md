@@ -14,7 +14,7 @@
 
 | キー | 使い方 |
 | --- | --- |
-| `schemaVersion` | **このルールが想定するのは `4`。** 一致しなければ止める。`4` 未満なら**互換対応せず、`sh <Airis>/figma-plugin/setup.sh` の後に Figma で書き出し直してもらう**。`4` より新しければ `<Airis>/figma-plugin/README.md` の「版の履歴」を確認してこのファイルを更新する |
+| `schemaVersion` | **このルールが想定するのは `4`。** 一致しなければ止める。`4` 未満なら**互換対応せず、`/airis:build-plugin` の後に Figma で書き出し直してもらう**。`4` より新しければ `<Airis>/figma-plugin/README.md` の「版の履歴」を確認してこのファイルを更新する |
 | `files` | `[{ file, collection, mode }]` の対応表。**ファイル名を推測せずこれを読む**（モード追加で名前が変わっても壊れない） |
 | `validation` | 自己検証結果。**空でない項目は診断（§3）に回す** |
 | `icons` / `logos` / `components` | 収録物の索引 |
@@ -88,8 +88,8 @@ Airis のトークン構造（`common.md` §2）へは、`$meta.json.files` の 
 ## 5. 受け渡しの手順
 
 1. 操作者が Figma デスクトップでプラグインを実行 → `tokens.bundle.json` をダウンロード（**GUI 操作なので Claude は代行できない**）
-   - 初回は **`sh <Airis>/figma-plugin/setup.sh`** が必要（`dist/` は gitignore されている）。依存導入・ビルド・自己テストを 1 コマンドで行い、Figma に読み込ませるパスを表示する。**ここは Claude が実行できる**
-   - Figma への読み込みは Plugins → Development → Import plugin from manifest… → `figma-plugin/manifest.json`
+   - 初回は **`/airis:build-plugin`**（中身は `sh <Airis>/figma-plugin/build.sh`。依存の導入・更新・ビルド・自己テストを行い、Figma が読む 3 ファイルをプロジェクト直下の **`figma-plugin/`** に置く。作業場は `.airis/work/figma-plugin/`。**`<Airis>` 配下には書かない**）。ビルド済みがコミットされていれば不要。**ここは Claude が実行できる**
+   - Figma への読み込みは Plugins → Development → Import plugin from manifest… → プロジェクト直下の `figma-plugin/manifest.json`（場所は固定。再ビルドしても再読み込みは不要）
 2. Claude が bundle のパスを受け取り、`$meta.json.schemaVersion` と `validation` を最初に確認する
 3. `validation` に空でない項目があれば、**トークンを展開する前に**診断（§3）として提示する
 4. §2 に従って `tokens/` へ展開 → §4 でアセットを展開 → 逆引き表を提示

@@ -38,7 +38,7 @@
       "Bash(npx shadcn@latest:*)",
       "Bash(npm ci)",
       "Bash(node scripts/doccheck.mjs)",
-      "Bash(sh figma-plugin/setup.sh)",
+      "Bash(sh figma-plugin/build.sh)",
       "Bash(npm test)"
     ],
     "ask": [

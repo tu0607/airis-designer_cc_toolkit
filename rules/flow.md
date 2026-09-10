@@ -20,13 +20,14 @@ Airis は **デザインをルールに従ってコード化し、開発リポ�
 - **プロジェクト側**（Claude Code を起動したディレクトリ）には `.airis/` を置く（`/airis:setup` が作る）:
   - `.airis/config.json` … プロジェクト固有の設定（雛形は `<Airis>/config/project.example.json`）。コミットして共有する
   - `.airis/rules/` … 自社向けのルール差分。**`<Airis>/rules/` と同名のファイルがあればそちらを優先して読む**（全文コピーではなく差分・追記だけを書く運用）。コミットして共有する
-  - `.airis/work/` … 使い捨ての作業場（`preview/` HTML モック・`diagnostics/` 診断の控え・`push/` Push 先のクローン）。`.airis/.gitignore` で除外済み
+  - `.airis/work/` … 使い捨ての作業場（`preview/` HTML モック・`diagnostics/` 診断の控え・`push/` Push 先のクローン・`figma-plugin/` 同梱 Figma プラグインのビルド作業場）。`.airis/.gitignore` で除外済み
+  - （`.airis/` の外）プロジェクト直下の `figma-plugin/` … 同梱 Figma プラグインのビルド済みファイル（使う場合のみ。`/airis:build-plugin` が置く。隠しフォルダだと Figma のファイル選択画面で見つけにくいため `.airis/` には入れない）。コミットして共有する
 
 ## 前提
 
 - デザイナーは非エンジニアの可能性があります。**専門用語を避け、日本語で、1 ステップずつ**案内してください。
 - 破壊的・外部影響のある操作（Push 先への `git push` など）は**必ず事前確認**を取ります。
-- **生成物は Push 先リポジトリの作業ツリーへ直接書きます**（`.airis/work/` に書いてから配置し直す二段構えはしない。`work/` の用途は上記の 3 つだけ）。
+- **生成物は Push 先リポジトリの作業ツリーへ直接書きます**（`.airis/work/` に書いてから配置し直す二段構えはしない。`work/` の用途は上記の 4 つだけ）。
 - **デザインシステムの層構造を尊重する**（Spotify Encore 参考）: トークンの決定と実装は**別の工程**であり、両者の答え合わせは Storybook 上で行う。トークンの追加・共通層への昇格・VRT 対象の追加は人間のプロセスであり、Claude は勝手に行わず候補の報告にとどめる（`rules/common.md` §2・`rules/web-app.md` §3.1.1）。
 - **絶対に守る 4 つの原則は `rules/principles.md` が正**（`.airis/` のあるプロジェクトではセッション開始時に自動注入される）。要点: ① GitHub のブラウザ画面での手動操作を案内しない ② Push 前にローカルでテスト・ビルド・Storybook 起動をしない（例外 4 つも principles.md 参照） ③ デザインソース側の不備を勝手に埋めない ④ トークンにない値をコードに書かない。
 
@@ -246,7 +247,7 @@ Figma を使わない場合のルート。**コード化の前に、デザイン
 > 触れ方の例（**これ以上推さない**）: 「Airis には **Airis Design Tokens Export** という Figma プラグインが同梱されていて、取り込みルールも用意してあります（Variables を DTCG で書き出せて、Enterprise プランが不要です）。`custom-plugin` を選ぶ場合の候補になりますが、要件に合うかは中身を見て判断してください。合わなければ他の 3 つでも問題ありません。」
 >
 > - **既に別のプラグインを使っている / 他の方式を選んだ場合は、それ以上言わない。** 乗り換えを勧めない。
-> - 選ばれたら `tokens.figmaExport` を `custom-plugin`、`tokens.customPluginSpec` を `rules/figma-plugin-airis.md` に設定する。
+> - 選ばれたら `tokens.figmaExport` を `custom-plugin`、`tokens.customPluginSpec` を `rules/figma-plugin-airis.md` に設定する。ビルド済みの `figma-plugin/`（プロジェクト直下）が無ければ `/airis:build-plugin` を案内する（ビルドはこのフローの中では行わない）。
 > - 選ばれなかったら以後この提案を繰り返さない（同じセッションでも別セッションでも）。
 
 **プラグインで書き出した JSON は「値の唯一の供給源」として使い切る**（受け取っただけで終わらせない）。用途は 2 つあり、**両方**を必ず行う:

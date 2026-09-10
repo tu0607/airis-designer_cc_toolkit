@@ -1,11 +1,11 @@
 # Airis — このリポジトリを開発する人（メンテナ）向けの指示
 
 このリポジトリは **Claude Code プラグイン「airis」の本体**であり、同時に**自分自身を配布する marketplace** です（`.claude-plugin/plugin.json` + `marketplace.json`）。
-利用者はこのリポジトリをクローンしません。`/plugin marketplace add` → `/plugin install` で導入し、任意のプロジェクトで `/airis:setup` `/airis:build-code` `/airis:build-token` を使います。
+利用者はこのリポジトリをクローンしません。`/plugin marketplace add` → `/plugin install` で導入し、任意のプロジェクトで `/airis:setup` `/airis:build-code` `/airis:build-token` `/airis:build-plugin` を使います。
 
 - **フロー全体（何を、どの順で、誰に確認するか）の「正」は `rules/flow.md`。** 常時守る 4 原則は `rules/principles.md`（`.airis/` のあるプロジェクトでは SessionStart hook が注入する。`hooks/hooks.json`）。
 - コードの書き方・テストの実装詳細は `rules/` の各ファイルが正。構成の全体像は `docs/repo-structure.md`。
-- 利用者のプロジェクト側に置かれるのは `.airis/`（`config.json` / `rules/` 差分 / `work/`）。雛形は `config/project.example.json`。
+- 利用者のプロジェクト側に置かれるのは `.airis/`（`config.json` / `rules/` 差分 / `work/`）と、同梱 Figma プラグインを使う場合のみプロジェクト直下の `figma-plugin/`（ビルド済み）。雛形は `config/project.example.json`。
 - `.claude/commands/doc-audit.md` は**メンテナ専用**（プラグインの `commands/` には含めない = 配布しない）。
 
 ## 編集時の約束

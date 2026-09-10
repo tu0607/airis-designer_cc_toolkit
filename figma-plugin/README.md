@@ -34,26 +34,27 @@ Figma Variables を W3C DTCG 形式のデザイントークンとして書き出
 - 出力は「ファイル名 → DTCG ツリー」を束ねた **1 ファイル `tokens.bundle.json`** をダウンロード
 - **ネットワークを使わない**（manifest の `networkAccess` は `none`）
 
-## セットアップ（これ 1 つでよい）
+## ビルド（利用者: `/airis:build-plugin` が実行する）
 
-Airis のディレクトリで:
+利用者のプロジェクトのルート（`.airis/` があるディレクトリ）で:
 
 ```bash
-sh figma-plugin/setup.sh
+sh "<Airis>/figma-plugin/build.sh"
 ```
 
-中で `npm install` → `npm run build`（`src/code.ts` → `dist/code.js`）→ `npm test`（Figma API をスタブして書き出し挙動を検証）を順に実行し、
-最後に **Figma に読み込ませる `manifest.json` の絶対パス**を表示する。**何度実行しても安全**で、どのディレクトリからでも動く。
-`src/code.ts` を触ったらこれをもう一度実行する。
+中で **ソースを `.airis/work/figma-plugin/` に複製 → `npm install`（依存の導入・更新）→ `npm run build`（`src/code.ts` → `dist/code.js`）→ `npm test`**（Figma API をスタブして書き出し挙動を検証）を順に実行し、
+Figma が読む 3 ファイルを**プロジェクト直下の `figma-plugin/`** にフラットに置き（`manifest.json` / `code.js` / `ui.html`。manifest の `main` / `ui` はそれに合わせて書き換える。`dist/` を無視する `.gitignore` を持つプロジェクトでも壊れない）、その `manifest.json` の絶対パスを表示する。
+`.airis/` の中に置かないのは、隠しフォルダだと Figma のファイル選択画面で見つけにくいため。
+**`<Airis>`（プラグインのキャッシュ）には何も書かない。** 人に `npm install` を頼む工程はない。
 
-## Figma への読み込み（開発用）
+- `.airis/work/` は gitignore 済み（`node_modules` はここに入る）。`figma-plugin/` は 70KB 程度なので**コミットして共有する**（他の人はビルド不要で、Figma に読み込ませるだけ）
+- **何度実行しても安全。** Airis を更新したら再実行する（同じ場所に上書きされるので、Figma への再読み込みは不要）
 
-> `dist/` は gitignore されている（＝clone 直後は存在しない）。**先に `sh figma-plugin/setup.sh` を実行する。**
-> ビルド前に manifest を読み込むと `main` が見つからず失敗する。
+## Figma への読み込み
 
-1. `sh figma-plugin/setup.sh`（**表示されるパスをそのままコピーできる**）
+1. `/airis:build-plugin`（上のスクリプトを実行し、**表示されるパスをそのままコピーできる**。ビルド済みの `figma-plugin/` がコミットされているプロジェクトでは不要）
 2. Figma デスクトップアプリ → メニュー → Plugins → Development → **Import plugin from manifest…**
-3. `figma-plugin/manifest.json` を選択
+3. `<プロジェクト>/figma-plugin/manifest.json` を選択
 4. プラグイン実行 → `tokens.bundle.json` をダウンロード（既定 `~/Downloads`）
 
 実行後に人が見るのはこの 2 点だけ（値の形は `npm test` が検査済み）:
@@ -61,7 +62,15 @@ sh figma-plugin/setup.sh
 - **プラグイン UI に警告が出ていない**（= `$meta.json.validation` が空。出ていれば Figma 側かプラグイン側の要対応）
 - **ロゴ / アイコンの SVG が実際に描画される**（`<rect>` や `<mask>` の寸法・色が落ちていない）
 
-`src/code.ts` を直したら手順 1 からやり直す。
+## 開発（このリポジトリで `src/code.ts` を直すとき）
+
+```bash
+cd figma-plugin && npm install && npm test
+```
+
+`dist/` はこのリポジトリでは gitignore されている（clone 直後は存在しない）。手元の Figma で試すときは、ビルド後に `figma-plugin/manifest.json` を読み込ませる。
+このリポジトリ自体に `.airis/` を作って `/airis:build-plugin` を実行した場合も、出力先がソースと同じ `figma-plugin/` になるため **`dist/code.js` だけ**が置かれる（manifest / ui.html / README は上書きしない）。
+直したら `npm test` を通す。利用者側は `/airis:build-plugin` の再実行で追随する。
 
 ## 想定する Figma の構成と出力名の対応
 
@@ -163,7 +172,7 @@ Styles（typography / elevation / paint / grid）はコレクションに属さ�
 
 ### 版の履歴
 
-**取り込み側が受け取るのは `schemaVersion: 4` 以降のみ**（`4` 未満は互換対応せず、`sh figma-plugin/setup.sh` の後に書き出し直す）。過去の変更は「なぜ今この形か」の記録として残す。
+**取り込み側が受け取るのは `schemaVersion: 4` 以降のみ**（`4` 未満は互換対応せず、`/airis:build-plugin` の後に書き出し直す）。過去の変更は「なぜ今この形か」の記録として残す。
 
 | 版 | 変更 |
 |---|---|

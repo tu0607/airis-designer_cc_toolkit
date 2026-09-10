@@ -20,7 +20,7 @@ const DOCS = ['CLAUDE.md', 'README.md',
   'rules/web-app-testing.md', 'rules/web-app-ci.md', 'rules/web-app-selfcheck.md',
   'rules/web-lp.md', 'rules/web-content-site.md', 'rules/native.md', 'rules/figma-plugin-airis.md',
   'rules/handoff.md',
-  'commands/setup.md', 'commands/build-code.md', 'commands/build-token.md',
+  'commands/setup.md', 'commands/build-code.md', 'commands/build-token.md', 'commands/build-plugin.md',
   '.claude/commands/doc-audit.md',
   'figma-plugin/README.md']
 const NUMBERED = ['rules/flow.md', 'rules/common.md',
@@ -274,7 +274,7 @@ const allSec = new Set(Object.values(sec).flatMap((s) => [...s]))
     try { JSON.parse(read(f)) } catch (e) { iss.push(`${f}: JSON 構文 ${e.message}`) }
   }
   // シェルスクリプトは構文検査 + 実行ビットを確認
-  for (const f of ['figma-plugin/setup.sh']) {
+  for (const f of ['figma-plugin/build.sh']) {
     try { execFileSync('sh', ['-n', f], { stdio: 'pipe' }) } catch { iss.push(`${f}: シェル構文エラー`) }
     if (!read(f).startsWith('#!/bin/sh')) iss.push(`${f}: shebang が #!/bin/sh でない`)
     if (!(fs.statSync(f).mode & 0o111)) iss.push(`${f}: 実行ビットが立っていない`)
@@ -333,7 +333,8 @@ const allSec = new Set(Object.values(sec).flatMap((s) => [...s]))
     'docs/design-tokens.md': 'figma-plugin/',
     'docs/repo-structure.md': 'figma-plugin/',
     'rules/flow.md': 'rules/figma-plugin-airis.md',
-    'commands/setup.md': 'figma-plugin/setup.sh',
+    'commands/setup.md': '/airis:build-plugin',
+    'commands/build-plugin.md': 'figma-plugin/build.sh',
     'config/project.example.json': 'rules/figma-plugin-airis.md',
     'rules/README.md': 'figma-plugin-airis.md',
     'figma-plugin/README.md': 'rules/figma-plugin-airis.md',
