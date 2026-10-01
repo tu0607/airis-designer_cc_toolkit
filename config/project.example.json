@@ -28,7 +28,7 @@
     "form": "react-hook-form",
     "stateManagement": { "client": "useState/useContext/zustand", "server": "tanstack-query" },
     "schema": "zod",
-    "$comment": "Web のデフォルトターゲット。rules/web-app.md と対応。葉は shadcn/ui 派生（components/ui）、自作は接頭辞 + PascalCase（componentPrefix。空 = 接頭辞なし。例: \"App\" → AppSearchField.tsx）。クライアント状態は範囲で使い分け（web-app.md §4 のフローチャート）。"
+    "$comment": "Web のデフォルトターゲット。rules/web-app.md と対応。葉は shadcn/ui 派生（場所は移植先の components.json の aliases.ui が正。既定 components/ui）、自作は接頭辞 + PascalCase（フォルダは既定 components/common で名前は任意。接頭辞は componentPrefix。空 = 接頭辞なし。例: \"App\" → AppSearchField.tsx）。クライアント状態は範囲で使い分け（web-app.md §4 のフローチャート）。"
   },
 
   "testing": {

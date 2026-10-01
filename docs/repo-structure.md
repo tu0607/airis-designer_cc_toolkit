@@ -58,7 +58,10 @@ airis-designer_cc_toolkit/
 │   ├── selfcheck.mjs             # ▶ 生成物の静的検査（クラス名の実在・ストーリー欠落・ルール違反・型エラー）
 │   ├── doccheck.mjs              # ▶ このリポジトリのルール類の整合性を検査（メンテナ用。ルールを編集したら通す）
 │   ├── theme.mjs                 #   実効 @theme の読み取り（effective-scale / contrast / selfcheck / classes が共用）
-│   └── classes.mjs               #   Tailwind クラス名の照合ロジック（selfcheck が使う）
+│   ├── classes.mjs               #   Tailwind クラス名の照合ロジック（selfcheck が使う）
+│   ├── reserved.mjs              #   ユーティリティの修飾語と同名のトークン名の判定表（effective-scale / selfcheck / doccheck が共用）
+│   ├── shadcn.mjs                #   shadcn 由来の層の場所を components.json の aliases.ui から解決（selfcheck が使う）
+│   └── test/                     #   scripts/ の再発防止テスト（node scripts/test/selfcheck.test.mjs）
 ├── .github/dependabot.yml        # 同梱 Figma プラグインの依存更新
 └── .claude/                      # メンテナがこのリポジトリで作業するときの設定
     ├── settings.json             #   権限設定

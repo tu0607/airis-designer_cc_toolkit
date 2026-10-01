@@ -22,8 +22,8 @@ Web ターゲットの変換ルール。`common.md` を前提に、確定した�
 1. **shadcn/ui で表せる部品は手書きしない** → `npx shadcn@latest add <部品>` で導入する（手書きすると本物の API からずれる。これはファイル取得なので原則 2 の対象外）
 2. クラス名は**`flow.md` ステップ 6 の逆引き表**から取る。arbitrary value（`p-[13px]`）と生パレット（`bg-blue-500`）は書かない
 3. variant は **CVA** に隔離する。`className={cond ? 'a' : 'b'}` を書かない
-4. 自作部品の boolean props は **`is` 接頭辞**（`components/ui/` の shadcn 派生は shadcn の API を尊重して改名しない）
-5. `components/common/` は **named export**、`components/ui/` は shadcn 慣習（小文字ファイル名）
+4. 自作部品の boolean props は **`is` 接頭辞**（shadcn 由来の層 = `components.json` の `aliases.ui` が指すフォルダ、既定 `components/ui/` は shadcn の API を尊重して改名しない）
+5. 自作の複合部品（既定 `components/common/`。フォルダ名は任意）は **named export**、shadcn 由来の層は shadcn 慣習（小文字ファイル名）
 6. 関数コンポーネントのみ。データ取得は **TanStack Query**（`useEffect` で取得しない）
 7. **コンポーネントを作ったら同時にストーリーも作る**（後で足す作業にしない）。`tags: ['vrt']` は付けない
 8. 画面を作ったら `tests/e2e/*.spec.ts` の雛形も置く
@@ -91,10 +91,10 @@ Web ターゲットの変換ルール。`common.md` を前提に、確定した�
 ```
 <配置先>/
 ├── components/
-│   ├── ui/                         # 葉コンポーネント（shadcn/ui 派生。小文字ファイル名・cva）
+│   ├── ui/                         # 葉コンポーネント（shadcn/ui 派生。小文字ファイル名・cva）。場所は components.json の aliases.ui が正（これは既定）
 │   │   ├── button.tsx
 │   │   └── button.stories.tsx
-│   └── common/                     # 機能横断の複合コンポーネント（PascalCase + 任意接頭辞）
+│   └── common/                     # 機能横断の複合コンポーネント（PascalCase + 任意接頭辞）。フォルダ名はルール上の既定値で任意
 │       ├── SearchField.tsx
 │       └── SearchField.stories.tsx
 ├── features/                       # 機能単位（画面・機能を生成する場合のみ）
@@ -122,10 +122,12 @@ Web ターゲットの変換ルール。`common.md` を前提に、確定した�
 
 | レイヤー | 置き場所 | 命名 | 規約 |
 | --- | --- | --- | --- |
-| 葉（汎用 UI 部品） | `components/ui/` | shadcn/ui 慣習（小文字ファイル: `button.tsx`、接頭辞なし） | shadcn/ui からの導入・派生。**API（`disabled` 等）は shadcn/Radix のまま尊重し、改名しない** |
-| 複合（機能横断） | `components/common/` | **PascalCase + 任意接頭辞**（named export） | 自作。§3.2 以降の規約に従う |
+| 葉（汎用 UI 部品） | shadcn の `components.json` で `aliases.ui` に指したフォルダ（既定 `components/ui/`） | shadcn/ui 慣習（小文字ファイル: `button.tsx`、接頭辞なし） | shadcn/ui からの導入・派生。**API（`disabled` 等）は shadcn/Radix のまま尊重し、改名しない** |
+| 複合（機能横断） | `components/common/`（**既定値。フォルダ名は任意**） | **PascalCase + 任意接頭辞**（named export） | 自作。§3.2 以降の規約に従う |
 | 機能専用 | `features/<機能>/components/` | 同上 | 自作。§3.2 以降の規約に従う |
 
+- **shadcn 由来の層の場所は決め打ちしない。** 正は対象リポジトリの `components.json`（`npx shadcn@latest init` が置く）の `aliases.ui` で、shadcn CLI はそこへ書き出す。セルフチェック（`web-app-selfcheck.md` §3）もそこを読んで「shadcn 由来かどうか」を判定する。`.airis/config.json` に上書き設定は持たない。
+- **自作部品側のフォルダ名（`common/`）はルール上の既定値にすぎない。** 移植先が `shared/` `widgets/` 等を使っていればそれに合わせる（`components/` 配下で shadcn 由来の層以外はすべて自作として §3.2 以降の規約を適用する）。
 - 接頭辞は `.airis/config.json` の `web.componentPrefix` で設定する（**ツールの既定は接頭辞なし**。例: `"App"` を設定すると `AppSearchField.tsx`）。
 - Figma のレイヤー名から意味のある名前へ整える（`Frame 12` → `PrimaryButton`）。連番・略語のままにしない。
 - Figma のデザインが shadcn/ui の既存部品（Button / Input / Dialog 等）で表せる場合は、**新規に作らず shadcn/ui を導入してトークンでスタイルを合わせる**。表せない場合のみ自作する。

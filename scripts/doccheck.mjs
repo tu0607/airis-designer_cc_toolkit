@@ -10,6 +10,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
+import { MODIFIER_WORDS } from './reserved.mjs'
 
 const DOCS = ['CLAUDE.md', 'README.md',
   'docs/usage.md', 'docs/design-tokens.md', 'docs/design-system.md',
@@ -395,8 +396,29 @@ const allSec = new Set(Object.values(sec).flatMap((s) => [...s]))
       [/buildPath/, '出力先 buildPath が無い'],
       // これが落ちると --spacing-4 等が既定スケールを上書きし、CI が通ったまま余白が壊れる
       [/RESERVED/, 'Tailwind 予約名前空間のガードが無い（common.md §2）'],
+      // これが落ちると --radius-s が rounded-s（辺指定）に取られ、左だけ丸い部品が CI を通る
+      [/MODIFIER_WORDS/, 'ユーティリティ修飾語のガード MODIFIER_WORDS が無い（common.md §2）'],
     ]
     for (const [re, why] of must) if (!re.test(code)) iss.push(`雛形: ${why}`)
+    // 雛形の MODIFIER_WORDS は scripts/reserved.mjs の写し。語彙がずれると
+    // 「Style Dictionary は出したのに selfcheck が ERROR」（またはその逆）になるので、完全一致を要求する
+    const mw = code.match(/const MODIFIER_WORDS = (\{[\s\S]*?\n\})/)
+    if (!mw) iss.push('雛形: MODIFIER_WORDS のオブジェクトを読めない')
+    else {
+      const tpl = new Function(`return ${mw[1]}`)()
+      const want = Object.fromEntries(Object.entries(MODIFIER_WORDS).map(([ns, w]) => [ns.replace(/^--|-$/g, ''), w.join('|')]))
+      for (const ns of new Set([...Object.keys(tpl), ...Object.keys(want)])) {
+        if (!(ns in want)) iss.push(`雛形の MODIFIER_WORDS.${ns} は scripts/reserved.mjs に無い`)
+        else if (!(ns in tpl)) iss.push(`scripts/reserved.mjs の --${ns}-* が雛形の MODIFIER_WORDS に無い`)
+        else if (tpl[ns] !== want[ns]) iss.push(`MODIFIER_WORDS.${ns} が雛形と scripts/reserved.mjs でずれている（雛形: ${tpl[ns]} / 実装: ${want[ns]}）`)
+      }
+    }
+    // common.md §2 の表にも同じ語が載っているか（利用者が読むのはこちら）
+    const common = read('rules/common.md')
+    for (const [ns, words] of Object.entries(MODIFIER_WORDS))
+      for (const w of words)
+        if (!new RegExp(`\`${ns}\\*\`[^\\n]*\`${w}\``).test(common))
+          iss.push(`common.md §2 の表に ${ns}* の「${w}」が無い（scripts/reserved.mjs と一致させる）`)
     if (/@import\s+["']tailwindcss["']/.test(body))
       iss.push('雛形が @import "tailwindcss" を出力している（エントリ CSS と二重 import になる）')
     if (/:root/.test(body)) iss.push('雛形のコード本体に :root がある')

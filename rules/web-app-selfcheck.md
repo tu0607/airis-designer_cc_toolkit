@@ -24,15 +24,16 @@ node <Airis>/scripts/selfcheck.mjs <作業ツリー> [--src <配置先>] --tsc
 | `sd-config` | ERROR | `config/sd.config.js`（`.mjs` でも可）が無い（CI 4 本が参照する） | `web-app-styling.md` §2 |
 | `workflow-path` | ERROR | ワークフローが参照するパスが実在しない（**配置先を `src/` にした案件でずれる**） | `web-app.md` §2・`web-app-ci.md` §1 |
 | `class-exists` | ERROR | **クラス名が `@theme` に実在しない**（`text-muted` だがトークンは `--color-text-muted`）。**Tailwind は何も出力せずエラーも出さない**ので tsc / ESLint / play / a11y のどれも捕まえられず、導入初期は VRT 対象もゼロ。**誰も気付かない最大の穴** | `web-app-styling.md` §3 |
+| `modifier-collision` | ERROR | **`@theme` のトークン名が Tailwind のユーティリティ修飾語と同名**（`--radius-s` → `rounded-s` は「start 側だけ丸める」辺指定として予約済み）。値は正しいのに**予約側が勝つ / トークンが予約側を乗っ取る / 両方効く**のどれかが黙って起き、ビルド・`tsc`・CI・`class-exists`（実在はする）をすべて通る。判定表は診断（`effective-scale.mjs`）と共通の `reserved.mjs` | `common.md` §2 |
 | `cn-twmerge` | ERROR | 独自の書体トークン（`--text-*`）があるのに **`cn()` が素の `twMerge` のまま**。`text-<書体>` が文字色と誤判定され、**併記した文字色が実行時に黙って消える**。ビルド・`tsc`・ESLint・`class-exists` はすべて通り、**気付けるのは a11y のコントラスト検査だけ** | `web-app-styling.md` §5 |
-| `arbitrary-value` | ERROR | `p-[13px]` のような arbitrary value（`data-[state=open]:` のような**バリアント修飾は除外**。`components/ui/` は対象外※） | `web-app-styling.md` §3・`web-app.md` §7 |
+| `arbitrary-value` | ERROR | `p-[13px]` のような arbitrary value（`data-[state=open]:` のような**バリアント修飾は除外**。shadcn 由来の層は対象外※） | `web-app-styling.md` §3・`web-app.md` §7 |
 | `raw-palette` | ERROR | `bg-blue-500` のような生パレット参照（**プロジェクトが `@theme` で再定義した色名は除外**する） | `web-app-styling.md` §3・`web-app.md` §7 |
 | `class-component` | ERROR | クラスコンポーネント | `web-app.md` §3.5・§7 |
-| `classname-ternary` | ERROR | `className={cond ? 'a' : 'b'}`（`components/ui/` と CVA のバリアント選択は対象外※） | `web-app-styling.md` §3・`web-app.md` §7 |
+| `classname-ternary` | ERROR | `className={cond ? 'a' : 'b'}`（shadcn 由来の層と CVA のバリアント選択は対象外※） | `web-app-styling.md` §3・`web-app.md` §7 |
 | `runtime-css-in-js` | ERROR | styled-components / emotion の import | `web-app.md` §7 |
 | `vrt-tag` | ERROR | 生成時に `tags: ['vrt']` を付けている（対象は `*.stories.tsx` のみ※） | `web-app-testing.md` §4 |
-| `boolean-prefix` | ERROR | 自作部品の boolean props に `is` 接頭辞が無い（`components/ui/` とストーリーは対象外※） | `web-app.md` §3.2 |
-| `named-export` | ERROR | `components/common/` が default export | `web-app.md` §3.1 |
+| `boolean-prefix` | ERROR | 自作部品の boolean props に `is` 接頭辞が無い（shadcn 由来の層とストーリーは対象外※） | `web-app.md` §3.2 |
+| `named-export` | ERROR | 自作の複合部品（`components/` 配下で shadcn 由来の層以外。既定名 `common/` だがフォルダ名は任意）が default export | `web-app.md` §3.1 |
 | `story-title` | ERROR | ストーリーの `meta` に `title` が無い | `web-app-storybook.md` §1 |
 | `tsc` | ERROR | 型エラー・import 漏れ・存在しない props への参照 | — |
 | `explicit-any` | WARN | 明示的な `any` | `web-app.md` §3.2 |
@@ -56,9 +57,10 @@ node <Airis>/scripts/selfcheck.mjs <作業ツリー> [--src <配置先>] --tsc
   - `hover:` `md:` などの variant、`!`、`/50` の不透明度は落として照合する。**方向語**（`border-b` / `rounded-t-lg`）は外して評価し、**`(--変数)` の CSS 変数参照**（`min-w-(--radix-popper-anchor-width)`）は判定しない
   - **`@theme` が取得できなければ WARN でスキップ**し「照合は未実施」と報告する（`npm ci` 前など）
 - **※ 検査範囲の絞り込み**（範囲を狭めるだけで、検査は無効化していない）:
-  - **`components/ui/` は `arbitrary-value` / `classname-ternary` / `boolean-prefix` の対象外**（`boolean-prefix` はストーリーも）。この層は shadcn/ui からの導入・派生で、`rounded-[2px]` / `translate-y-[calc(…)]` / `orientation === 'horizontal' ? '-ml-4' : '-mt-4'` は**上流のコードそのもの**。改名しないのと同じ理由（`web-app.md` §3.1・同ファイルの生成直前チェックリスト 1）で内部実装も変えない — 変えると本物の API からずれ、以後の `shadcn add` も当たらなくなる。
-    **トレードオフ**: **自分で `components/ui/` に arbitrary value を足しても検査されない。** 検査されないことは許可ではなく、**逆引き表に無い値を書かないのは `web-app.md` §7 のまま**。値の調整はトークン側か `components/common/` のラッパーで行う
+  - **shadcn 由来の層は `arbitrary-value` / `classname-ternary` / `boolean-prefix` の対象外**（`boolean-prefix` はストーリーも）。**層の場所は決め打ちしない**: 対象リポジトリの `components.json` の `aliases.ui`（shadcn CLI の書き出し先。`tsconfig.json` の `paths` で実パスに解決する）を読み、無ければ既定の `components/ui/`。`.airis/config.json` に上書き設定は作らない（`components.json` が正）。スクリプトはヘッダに解決結果を出すので、想定と違えばそこで気付ける。この層は shadcn/ui からの導入・派生で、`rounded-[2px]` / `translate-y-[calc(…)]` / `orientation === 'horizontal' ? '-ml-4' : '-mt-4'` は**上流のコードそのもの**。改名しないのと同じ理由（`web-app.md` §3.1・同ファイルの生成直前チェックリスト 1）で内部実装も変えない — 変えると本物の API からずれ、以後の `shadcn add` も当たらなくなる。
+    **トレードオフ**: **自分で shadcn 由来の層に arbitrary value を足しても検査されない。** 検査されないことは許可ではなく、**逆引き表に無い値を書かないのは `web-app.md` §7 のまま**。値の調整はトークン側か自作部品（既定 `components/common/`）のラッパーで行う
   - **`classname-ternary` は CVA のバリアント選択を除外する。** `buttonVariants({ variant: isActive ? 'outline' : 'ghost' })` は**クラス列を CVA に隔離できている**正しい形で、禁止対象は `cn(cond ? 'bg-primary p-4' : 'bg-muted p-2')` のような**クラス文字列自体の分岐**。`variant` / `size` / `intent` / `tone` / `color` / `align` / `orientation` / `state` のキーに続く三項は前者と判定する
   - **`vrt-tag` の対象は `*.stories.tsx` のみ。** `tests/vrt/storybook.spec.ts` は「`vrt` タグの付いたストーリーを絞り込んで撮る」側（`web-app-testing.md` §4 の雛形）なので、タグ名が出てくるのは正しい。禁じたいのは**ストーリー側が生成時に付けること**だけ
+- **`modifier-collision` の判定方法**: プロジェクトが定義した `@theme` の変数名について、名前空間ごとの予約語（`common.md` §2 の表 = `reserved.mjs` の `MODIFIER_WORDS`）と key の**完全一致**を見る。Tailwind 既定分は見ない。報告は定義元のファイル・行（`tokens.css` 等）を指し、寄せ先は「接頭辞を挟む」（`--radius-app-s`）。**値ではなく名前の問題**なので、`sd.config.js` で除外するのではなく正本（Figma の Variable 名）を直す。`@theme` を取得できなければ判定しない
 - **`cn-twmerge` の判定方法**: `@theme` に**プロジェクトが定義した `--text-*`**（既定スケール `xs`〜`9xl` 以外の名前 = 独自の書体トークン）があり、かつ `tailwind-merge` を import しているファイルに `extendTailwindMerge` / `createTailwindMerge` が無ければ ERROR。**移植先の既存 `lib/utils.ts` も対象**（`cn()` は shadcn の初期化が置くファイルで、今回の差分に入らないことが多い）。`@theme` を取得できなければ判定しない。
 - **ここで検査できないものは CI の役目**（play / a11y / E2E / VRT）。セルフチェックはそれらの代わりではなく、**CI が赤くなる前に潰せるもの**と**CI では沈黙するもの**を拾う層。

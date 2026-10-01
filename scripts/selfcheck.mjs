@@ -19,6 +19,8 @@ import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { readTheme } from './theme.mjs'
 import { extractClasses, judgeClass } from './classes.mjs'
+import { findModifierCollisions, locateVar } from './reserved.mjs'
+import { resolveShadcnUiDir } from './shadcn.mjs'
 
 // ---------------------------------------------------------------- 引数
 const argv = process.argv.slice(2)
@@ -65,9 +67,14 @@ const tsx = targets.filter((f) => /\.tsx?$/.test(f))
 const src = (f) => fs.readFileSync(path.join(repo, f), 'utf8')
 const lineOf = (text, idx) => text.slice(0, idx).split('\n').length
 
+// shadcn 由来の層の場所は決め打ちしない。正は対象リポジトリの components.json の aliases.ui
+// （shadcn CLI の書き出し先）。無ければ既定の components/ui/（web-app.md §3.1）
+const ui = resolveShadcnUiDir(repo)
+
 console.log(`# セルフチェック\n`)
 console.log(`- 対象: ${path.resolve(repo)}${SRC ? `（配置先: ${SRC}/）` : ''}`)
-console.log(`- 検査対象: ${flag('all') ? '全ファイル' : '今回生成/変更したファイル'} ${targets.length} 件（うち .ts/.tsx ${tsx.length} 件）\n`)
+console.log(`- 検査対象: ${flag('all') ? '全ファイル' : '今回生成/変更したファイル'} ${targets.length} 件（うち .ts/.tsx ${tsx.length} 件）`)
+console.log(`- shadcn 由来の層: ${ui.dir}/（${ui.source === 'components.json' ? `components.json の aliases.ui = ${ui.alias}` : 'components.json に aliases.ui が無いので既定'}）\n`)
 
 // ================================================================ S1. 構造の完全性
 const comps = tsx.filter((f) =>
@@ -120,14 +127,26 @@ for (const wf of all.filter((f) => /^\.github\/workflows\/.+\.ya?ml$/.test(f))) 
 // 実効テーマ（既定 + プロジェクトの @theme）。S2 の除外判定と S2b/S2c が使う
 const theme = readTheme(repo)
 
+// ================================================================ S1b. トークン名がユーティリティの修飾語に取られていないか
+// --radius-s を出すと rounded-s が生成されるはずだが、rounded-s は「start 側だけ丸める」辺指定として
+// 予約済みで、両方が合成される（予約側が勝つ / トークンが予約側を乗っ取る / 両方効く の 3 通り）。
+// class-exists は「--radius-s が @theme に実在する」ことしか見ないので、隅ごとに丸みが違う部品が
+// ビルド・tsc・CI をすべて通る。判定表は effective-scale.mjs と共通の reserved.mjs（片方だけ直さない。common.md §2・§9.3）
+for (const c of findModifierCollisions(theme.project)) {
+  const at = locateVar((f) => fs.readFileSync(path.join(repo, f), 'utf8'), theme.projSources, c.name)
+  add('ERROR', 'modifier-collision', at?.file ?? tokensCss, at?.line ?? 0,
+      `\`${c.name}\` が生成する \`${c.cls}\` は Tailwind の予約ユーティリティ（${c.util}-${c.key}）と衝突: **${c.effect}**（エラーも出ない）`,
+      `${c.suggest}。正本（Figma の Variable 名 / tokens/）を直して再ビルドする（common.md §2）`)
+}
+
 // ================================================================ S2. ルール違反
 const PALETTE = 'red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone'
 const RULES = [
   { id: 'arbitrary-value', level: 'ERROR',
     // `]` の直後が `:` のものはバリアント修飾（data-[state=open]: / aria-[…]: / has-[…]:）なので除外する
     re: /\bclassName=(?:"[^"]*|\{[^}]*)\b[a-z-]+\[[^\]]+\](?!:)/g,
-    // components/ui/ は shadcn/ui から導入した実装。rounded-[2px] や
-    // translate-y-[calc(…)] は上流のコードであり、書き換えると「本物の API からずれる」
+    // shadcn 由来の層（components.json の aliases.ui。既定 components/ui/）は shadcn/ui から導入した実装。
+    // rounded-[2px] や translate-y-[calc(…)] は上流のコードであり、書き換えると「本物の API からずれる」
     // （web-app.md §3.1・生成直前チェックリスト 1）。改名しないのと同じ理由で内部実装も責めない
     skipUi: true,
     msg: 'arbitrary value を使っている', how: 'トークン化するか common.md §9.3 の診断に回す（web-app-styling.md §3・web-app.md §7）' },
@@ -141,7 +160,7 @@ const RULES = [
     msg: 'クラスコンポーネント', how: '関数コンポーネントにする（web-app.md §3.5・§7）' },
   { id: 'classname-ternary', level: 'ERROR',
     re: /className=\{[^}]*\?[^}]*:[^}]*\}/g,
-    // components/ui/ は shadcn/ui の上流実装なので責めない（arbitrary-value と同じ理由）
+    // shadcn 由来の層は上流実装なので責めない（arbitrary-value と同じ理由）
     skipUi: true,
     // CVA のバリアント名を三項で選ぶのは「隔離できている」正しい書き方なので責めない
     //   ✅ buttonVariants({ variant: isActive ? 'outline' : 'ghost' })
@@ -164,9 +183,9 @@ const RULES = [
 ]
 for (const f of tsx) {
   const t = src(f)
-  // components/ui/ は shadcn/ui の導入・派生領域（web-app.md §3.1）。内部実装を書き換えると本物の API から
-  // ずれるので、skipUi のルールは適用しない。storiesOnly はストーリー側だけを対象にする
-  const isUi = /(^|\/)components\/ui\//.test(f)
+  // shadcn 由来の層（web-app.md §3.1。場所は上の ui で解決済み）は導入・派生領域。内部実装を書き換えると
+  // 本物の API からずれるので、skipUi のルールは適用しない。storiesOnly はストーリー側だけを対象にする
+  const isUi = ui.isUi(f)
   const isStory = /\.stories\.tsx$/.test(f)
   for (const r of RULES) {
     if (r.skipUi && isUi) continue
@@ -180,7 +199,7 @@ for (const f of tsx) {
   if (/useEffect\(/.test(t) && /\b(?:fetch|axios)\s*\(/.test(t))
     add('WARN', 'useeffect-fetch', f, lineOf(t, t.indexOf('useEffect(')),
         'useEffect と fetch/axios が同一ファイルにある', 'データ取得は TanStack Query に寄せる（web-app.md §4・§7）')
-  // boolean props に is 接頭辞が無い（shadcn 派生の components/ui/ は shadcn API を尊重するので除外）
+  // boolean props に is 接頭辞が無い（shadcn 由来の層は shadcn API を尊重するので除外）
   if (!isUi && !isStory) {
     for (const m of t.matchAll(/^\s{2,}(\w+)\??:\s*boolean\b/gm)) {
       const n = m[1]
@@ -189,8 +208,9 @@ for (const f of tsx) {
             `${'is' + n[0].toUpperCase() + n.slice(1)} にする（web-app.md §3.2）`)
     }
   }
-  // components/common/ は named export
-  if (/(^|\/)components\/common\/[A-Z]\w*\.tsx$/.test(f) && /export\s+default\b/.test(t))
+  // 自作部品は named export（web-app.md §3.1）。対象は「components/ 配下の PascalCase .tsx で、shadcn 由来の層
+  // （components.json の aliases.ui。既定 components/ui/）以外」。フォルダ名（common/ 等）にも深さにも依存しない
+  if (!isUi && !isStory && /(^|\/)components\/(?:.*\/)?[A-Z]\w*\.tsx$/.test(f) && /export\s+default\b/.test(t))
     add('ERROR', 'named-export', f, lineOf(t, t.indexOf('export default')),
         'default export になっている', 'named export にする（web-app.md §3.1）')
 }

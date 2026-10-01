@@ -33,6 +33,24 @@ const MODES = (process.env.MODES ?? '').split(',').map((m) => m.trim()).filter(B
 //   意味ベースの名前（--color-primary / --radius-card / --text-heading-lg）は衝突しないので出す。
 const RESERVED_KEY = String.raw`\d+(\.\d+)?|xs|sm|base|md|lg|\d?xl|none|full`
 const RESERVED = new RegExp(`^--(spacing|text|radius|shadow|breakpoint|container|font)(-(${RESERVED_KEY})$|$)`)
+// ★ もう 1 種類のガード: **ユーティリティの修飾語と同名になる key**（common.md §2）。
+//   --radius-s を出すと rounded-s が生えるはずだが、rounded-s は「start 側の 2 隅だけ丸める」辺指定として
+//   予約済みで両方が合成される。値は正しいのに名前が予約語と同じせいで、予約側が勝つ（shadow-none）/
+//   トークンが予約側を乗っ取る（w-full / font-bold）/ 両方効く（text-left）のどれかが黙って起き、
+//   ビルド・tsc・class-exists（--radius-s は実在する）をすべて通る。同じ性質の語を名前空間ごとに列挙する。
+//   この表は <Airis>/scripts/reserved.mjs の MODIFIER_WORDS の写し（診断・検査と同じ語彙。doccheck が一致を見る）。
+const MODIFIER_WORDS = {
+  radius: 's|e|t|r|b|l|ss|se|es|ee|tl|tr|br|bl',                                        // rounded-<辺・角>
+  text: 'left|center|right|justify|start|end|wrap|nowrap|balance|pretty|ellipsis|clip',  // text-align / text-wrap / text-overflow
+  shadow: 'none',
+  font: 'thin|extralight|light|normal|medium|semibold|bold|extrabold|black',             // font-<ウェイト>
+  spacing: 'auto|px|full|screen|min|max|fit',                                            // m-auto / w-full …
+  container: 'none|full|min|max|fit|prose|screen',                                       // max-w-*
+  color: 'inherit|current|transparent',
+  leading: 'none',
+  blur: 'none',
+}
+const MODIFIER = new RegExp(`^--(?:${Object.entries(MODIFIER_WORDS).map(([ns, w]) => `${ns}-(?:${w})`).join('|')})$`)
 
 StyleDictionary.registerFormat({
   name: 'tailwind/theme',
@@ -42,17 +60,21 @@ StyleDictionary.registerFormat({
     // 件数を最後にまとめて報告する（Tailwind はエラーを出さないので、出すと黙って壊れる）。
     const unresolved = []
     const reserved = []
+    const modifier = []
     const body = []
     for (const t of dictionary.allTokens) {
       const value = t.$value ?? t.value
       if (typeof value === 'string' && value.startsWith('@')) { unresolved.push(t.name); continue }
       if (RESERVED.test(`--${t.name}`)) { reserved.push(t.name); continue }
+      if (MODIFIER.test(`--${t.name}`)) { modifier.push(t.name); continue }
       body.push(`  --${t.name}: ${value};`)
     }
     if (unresolved.length)
       console.warn(`⚠️ 未解決の参照 ${unresolved.length} 件を CSS に出していません: ${unresolved.join(', ')}`)
     if (reserved.length)
       console.warn(`⚠️ Tailwind 既定と衝突する ${reserved.length} 件を出していません（標準スケールを使う）: ${reserved.join(', ')}`)
+    if (modifier.length)
+      console.warn(`⚠️ ユーティリティの修飾語と同名の ${modifier.length} 件を出していません（接頭辞を挟んで改名する。例: radius-s → radius-app-s）: ${modifier.join(', ')}`)
     return `/* ${file.destination} — 生成物。手編集しない（正本は tokens/） */\n@theme {\n${body.join('\n')}\n}\n`
   },
 })
@@ -77,6 +99,7 @@ export default {
 - **前提**: 移植先の `package.json` に `"type": "module"` があること（無ければファイル名を `sd.config.mjs` にして CI 側のパスも合わせる）。
 - **予約名前空間のガード（`RESERVED`）を消さない**（何が起きるかと対象名前空間は `common.md` §2 が正）。除外した分は逆引き表に `Spacing/16 → p-4` の形で残す。
   - **意図的に既定を上書きしたい場合**（プロダクトの刻みを変える等）は `RESERVED` から外すのではなく、**デザイナーと合意した旨を PR 本文に書いてから**該当トークンだけを例外にする。
+- **修飾語のガード（`MODIFIER`）も消さない。** こちらは値の上書きではなく**名前が Tailwind の予約語と同じ**（`--radius-s` → `rounded-s` は辺指定）ケースで、例外にする余地が無い（そのクラス名は必ず予約側の意味と混ざる）。**除外して終わりにせず、正本の名前を直す**（Figma の Variable 名に接頭辞を挟む。`common.md` §2）。語彙は `<Airis>/scripts/reserved.mjs` と同じで、診断（`effective-scale.mjs`）と検査（`selfcheck.mjs` の `modifier-collision`）が同じ表で捕まえる。
 - **未解決の参照は CSS に出さず、件数を警告する**（上の `format` 内のガード）。`figma-plugin-airis.md` §3 は `unresolvedAliases` を「止める」区分にしているが、**プラグインは解決できなかった参照を `$value: "@VariableID:1:2"` として温存する**ので、素通しすると `--color-x: @VariableID:1:2;` という不正な値が CSS に出る。**「無言で壊れない」をここでも維持する。**
 - **エントリ CSS への取り込みは 1 行のマージ提案として出す**（生成物に `@import "tailwindcss"` を含めない。既存のエントリと二重 import になるため）:
   ```css

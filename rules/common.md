@@ -103,8 +103,28 @@ Figma のトークン名は px 値そのものになりがちなので（`Spacin
 - **雛形のガードが見るのは 7 つ**: `--spacing` / `--text` / `--radius` / `--shadow` / `--breakpoint` / `--container` / `--font`。Tailwind がこれらに意味を持つので、**既定キーと同名になる名前**（数値の段 `-4` `-16`、素の段名 `sm` `md` `lg` `2xl` `none` `full`）を出すと同じ上書きが起きる。
   - **意味ベースの名前なら衝突しない**（`--radius-card` / `--text-heading-lg` / `--spacing-gutter`）ので出してよい。
   - 衝突するトークンが必要な場合は、**上書きが意図的である旨をデザイナーと合意**してから例外にする（`web-app-styling.md` §2）。
-- **`--color-*` はガードの対象外**（既定パレットは `--color-blue-500` のような 2 段の名前で、上の規則では拾えない）。**色は別の経路で担保する**: 意味ベースで命名し（§2 の命名規約）、生パレット参照は `raw-palette` 検査が拾う。
+- **`--color-*` は値の上書きガードの対象外**（既定パレットは `--color-blue-500` のような 2 段の名前で、上の規則では拾えない）。**色は別の経路で担保する**: 意味ベースで命名し（§2 の命名規約）、生パレット参照は `raw-palette` 検査が拾う。
   - ただし **`raw-palette` はプロジェクトが `@theme` で再定義した色名を除外する** = **パレット名の上書きは設計上許容**（`web-app-selfcheck.md` §2）。**意図せず既定パレットと同名を出さないよう、逆引き表を作る時点で確認する。**
+
+#### ユーティリティの修飾語と同名になる key（**値は正しいのに、名前が予約語と同じで期待どおりに効かない**）
+
+上の「値の上書き」とは別の穴。`--radius-s: 4px` を出すと `rounded-s` が生えるはずだが、**Tailwind v4 では `rounded-s`（start 側）や `rounded-l`（left 側）が「辺だけ丸める」ユーティリティとして予約されていて、両方が 1 つのルールに合成される**。結果、`rounded-s` を書いた部品は**隅ごとに丸みが食い違った**まま、ビルド・型検査・CI・`class-exists`（`--radius-s` は `@theme` に実在する）をすべて通って公開される。
+衝突の向きは 3 通りあり、どれもエラーにならない（Tailwind 4.3.3 の `compile` で実測）: **予約側が勝ってトークンが無視される** / **トークンが既存ユーティリティを乗っ取る**（`w-full` が全部品でトークンの長さになる、`font-bold` が太字でなく書体指定になる）/ **両方効く**（`text-left` を書体に使うと左揃えも付く）。
+
+| 名前空間 | 予約されている key | 何が起きるか |
+| --- | --- | --- |
+| `--radius-*` | `s` `e` `t` `r` `b` `l` `ss` `se` `es` `ee` `tl` `tr` `br` `bl` | `rounded-<辺・角>`（辺・角だけ丸める）と合成され、隅ごとに値が食い違う |
+| `--text-*` | `left` `center` `right` `justify` `start` `end` `wrap` `nowrap` `balance` `pretty` `ellipsis` `clip` | `text-align` / `text-wrap` / `text-overflow` が**同時に効く** |
+| `--shadow-*` | `none` | `shadow-none`（影を消す）が勝ち、トークンは無視される。`inner` は v4 に無い（`inset-shadow-*`）ので衝突しない |
+| `--font-*` | `thin` `extralight` `light` `normal` `medium` `semibold` `bold` `extrabold` `black` | `font-<ウェイト>` を**乗っ取る**（`font-bold` が太字ではなく書体指定になる） |
+| `--spacing-*` | `auto` `px` `full` `screen` `min` `max` `fit` | `m-auto` / `w-px` / `w-full` … を**乗っ取る**（全部品の寸法が変わる） |
+| `--container-*` | `none` `full` `min` `max` `fit` `prose` `screen` | `max-w-*` を乗っ取る |
+| `--color-*` | `inherit` `current` `transparent` | `bg-transparent` 等の予約側が勝ち、トークンは無視される |
+| `--leading-*` / `--blur-*` | `none` | `leading-none`（行間 1）/ `blur-none`（ぼかし無し）を乗っ取る |
+
+- **判定表の正は `<Airis>/scripts/reserved.mjs` の 1 か所**。診断（`effective-scale.mjs`。§9.3）と生成後の検査（`selfcheck.mjs` の `modifier-collision`。`web-app-selfcheck.md` §2）と `sd.config.js` 雛形の `MODIFIER` ガード（`web-app-styling.md` §2）がすべて同じ語彙で捕まえる。**片方だけ直さない**（§9.3 の方針。食い違うと診断と検査が逆のことを言う）。
+- **直し方は「接頭辞を挟む」**（`radius-s` → `radius-app-s` = `rounded-app-s`）か意味ベースの名前（`radius-card`）にする。**値の寄せ先の話ではなく名前の話**なので、正本（Figma の Variable 名）を直して再ビルドする。`sd.config.js` で除外して終わりにしない（そのトークンが使えないまま残る）。
+- 一致は key の**完全一致**で見る（`--radius-small` や `--text-left-nav` は衝突しない）。
 
 ### 「値 → トークン名」逆引き表（コード生成の唯一の参照元）
 
@@ -297,6 +317,7 @@ node <Airis>/scripts/effective-scale.mjs <対象リポジトリのパス> spacin
   - **`effective-scale.mjs`（診断）と `class-exists`（生成後の検査）は同じ規則で判定する。** 片方だけ整数倍にすると、**診断が「直せ」と言い検査が「OK」と言う**状態になり、どちらを信じるか決められない。**片方だけ直さない。**
   - これを守らないと、**Figma の正しい値を「スケールに乗らないので直してください」とデザイナーに突き返す**ことになる。原則 3 を守るための道具が、存在しない不備を報告して誤った修正を要求する状態になるので、`class-exists` の誤検知（単なるノイズ）より有害。
 - **`MANUAL` / `ERROR` / `UNKNOWN` は「適合」ではない。** スクリプトの末尾は非適合件数と**判定していない件数を別に出す**。「全件適合」と読み替えて報告しない。
+- **スクリプトは値の照合とは別に「名前の衝突」も報告する**（§2「ユーティリティの修飾語と同名になる key」。`--radius-s` が辺指定の `rounded-s` と混ざる等）。これは寄せ先を選ぶ話ではなく**トークン名を直すまで生成に進めない ERROR**で、生成後の `selfcheck.mjs`（`modifier-collision`）と同じ表で判定する。
 
 #### Web アプリ（React + shadcn/ui + CVA）
 

@@ -11,10 +11,12 @@
  *
  * バージョン固有の数値をこのリポジトリに持たないための道具。
  * テーマの読み取りは theme.mjs に共通化してある（selfcheck.mjs と共用）。
+ * 名前の衝突（--radius-s が rounded-s に取られる等）の判定表は reserved.mjs（selfcheck.mjs と共用）。
  * ビルドもテストもせず、CSS を読むだけ（principles.md 原則 2 の対象外）。
  */
 import path from 'node:path'
 import { readTheme, toPx, ROOT_FONT_PX } from './theme.mjs'
+import { findModifierCollisions } from './reserved.mjs'
 
 // 接頭辞 → 「どのユーティリティ群か」の対応
 const GROUPS = [
@@ -145,6 +147,25 @@ for (const key of Object.keys(scale)) {
     if (own.length) console.log('  プロジェクト定義: ' + own.map((s) => s.label).join('  '))
     if (std) console.log(`  Tailwind 既定: ${std} 個（**生成コードでは使わない** — セマンティックなトークンを使う）`)
   }
+  console.log('')
+}
+
+// ---------------------------------------------------------------- 名前の衝突
+// 値がスケールに乗っていても、**名前がユーティリティの修飾語と同じ**だと期待どおりに効かない
+// （--radius-s → rounded-s は「start 側だけ丸める」辺指定として予約済み。予約側が勝つ / トークンが予約側を
+// 乗っ取る / 両方効く のいずれかが黙って起きる。common.md §2）。
+// class-exists は「--radius-s が @theme に実在する」ことしか見ないので、ここと selfcheck.mjs の
+// modifier-collision で捕まえる。判定表は reserved.mjs の 1 か所（片方だけ直さない。common.md §9.3）
+const collisions = findModifierCollisions(project)
+if (collisions.length) {
+  console.log('# 名前の衝突（ユーティリティの修飾語と同名の key）')
+  console.log('')
+  console.log('| 変数 | 判定 | 内容 |')
+  console.log('| --- | --- | --- |')
+  for (const c of collisions)
+    console.log(`| \`${c.name}\` | ERROR | \`${c.cls}\` は Tailwind の予約ユーティリティ（${c.util}-${c.key}）と衝突: ${c.effect}。${c.suggest} |`)
+  console.log('')
+  console.log(`**${collisions.length} 件の名前が Tailwind の予約語と衝突している。** トークン名を変えるまで生成に進まない（値の寄せ先ではなく名前の問題。Figma 側の Variable 名を直す）。`)
   console.log('')
 }
 
